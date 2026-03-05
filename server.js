@@ -42,6 +42,20 @@ app.get('/health', (req, res) => {
   });
 });
 
+app.get('/', (req, res) => {
+  res.json({
+    status: 'ok',
+    message: 'NIM Proxy Root OK'
+  });
+});
+
+app.get('/v1', (req, res) => {
+  res.json({
+    status: 'ok',
+    message: 'OpenAI-compatible endpoint ready'
+  });
+});
+
 // List models endpoint (OpenAI compatible)
 app.get('/v1/models', (req, res) => {
   const models = Object.keys(MODEL_MAPPING).map(model => ({
