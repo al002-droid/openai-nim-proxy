@@ -45,15 +45,14 @@ app.get('/health', (req, res) => {
 app.get('/', (req, res) => {
   res.json({
     status: 'ok',
-    message: 'NIM Proxy Root OK'
+    service: 'OpenAI to NVIDIA NIM Proxy',
+    message: 'Use /v1/chat/completions for API calls'
   });
 });
 
+// Also handle /v1
 app.get('/v1', (req, res) => {
-  res.json({
-    status: 'ok',
-    message: 'OpenAI-compatible endpoint ready'
-  });
+  res.json({ status: 'ok', message: 'NIM Proxy v1 endpoint' });
 });
 
 // List models endpoint (OpenAI compatible)
