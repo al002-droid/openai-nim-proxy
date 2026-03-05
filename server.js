@@ -107,6 +107,12 @@ app.get("/", (req, res) => {
   res.send("NIM Proxy Running");
 });
 
+// Permitir POST en raíz para compatibilidad total
+app.post("/", async (req, res) => {
+  req.url = "/v1/chat/completions";
+  app._router.handle(req, res);
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
