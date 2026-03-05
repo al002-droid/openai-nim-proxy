@@ -32,6 +32,25 @@ const MODEL_MAPPING = {
   'gemini-pro': 'qwen/qwen3-next-80b-a3b-thinking'
 };
 
+// Root endpoint - CRITICAL for JanitorAI
+app.get('/', (req, res) => {
+  console.log('Root endpoint accessed by:', req.headers['user-agent']);
+  res.json({ 
+    status: 'ok', 
+    message: 'NIM Proxy is running',
+    endpoints: ['/v1/models', '/v1/chat/completions', '/health']
+  });
+});
+
+// V1 endpoint - Also important
+app.get('/v1', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    message: 'NIM Proxy v1 endpoint',
+    endpoints: ['/models', '/chat/completions']
+  });
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
@@ -40,19 +59,6 @@ app.get('/health', (req, res) => {
     reasoning_display: SHOW_REASONING,
     thinking_mode: ENABLE_THINKING_MODE
   });
-});
-
-app.get('/', (req, res) => {
-  res.json({
-    status: 'ok',
-    service: 'OpenAI to NVIDIA NIM Proxy',
-    message: 'Use /v1/chat/completions for API calls'
-  });
-});
-
-// Also handle /v1
-app.get('/v1', (req, res) => {
-  res.json({ status: 'ok', message: 'NIM Proxy v1 endpoint' });
 });
 
 // List models endpoint (OpenAI compatible)
@@ -135,13 +141,13 @@ app.post('/v1/chat/completions', async (req, res) => {
       
       response.data.on('data', (chunk) => {
         buffer += chunk.toString();
-        const lines = buffer.split('\\n');
+        const lines = buffer.split('\n');
         buffer = lines.pop() || '';
         
         lines.forEach(line => {
           if (line.startsWith('data: ')) {
             if (line.includes('[DONE]')) {
-              res.write(line + '\\n');
+              res.write(line + '\n');
               return;
             }
             
@@ -155,14 +161,14 @@ app.post('/v1/chat/completions', async (req, res) => {
                   let combinedContent = '';
                   
                   if (reasoning && !reasoningStarted) {
-                    combinedContent = '<think>\\n' + reasoning;
+                    combinedContent = '<think>\n' + reasoning;
                     reasoningStarted = true;
                   } else if (reasoning) {
                     combinedContent = reasoning;
                   }
                   
                   if (content && reasoningStarted) {
-                    combinedContent += '</think>\\n\\n' + content;
+                    combinedContent += '</think>\n\n' + content;
                     reasoningStarted = false;
                   } else if (content) {
                     combinedContent += content;
@@ -181,9 +187,9 @@ app.post('/v1/chat/completions', async (req, res) => {
                   delete data.choices[0].delta.reasoning_content;
                 }
               }
-              res.write(`data: ${JSON.stringify(data)}\\n\\n`);
+              res.write(`data: ${JSON.stringify(data)}\n\n`);
             } catch (e) {
-              res.write(line + '\\n');
+              res.write(line + '\n');
             }
           }
         });
@@ -205,7 +211,7 @@ app.post('/v1/chat/completions', async (req, res) => {
           let fullContent = choice.message?.content || '';
           
           if (SHOW_REASONING && choice.message?.reasoning_content) {
-            fullContent = '<think>\\n' + choice.message.reasoning_content + '\\n</think>\\n\\n' + fullContent;
+            fullContent = '<think>\n' + choice.message.reasoning_content + '\n</think>\n\n' + fullContent;
           }
           
           return {
@@ -240,8 +246,9 @@ app.post('/v1/chat/completions', async (req, res) => {
   }
 });
 
-// Catch-all for unsupported endpoints
+// Catch-all for debugging - this helps see what JanitorAI is requesting
 app.all('*', (req, res) => {
+  console.log(`404 - Method: ${req.method}, Path: ${req.path}`);
   res.status(404).json({
     error: {
       message: `Endpoint ${req.path} not found`,
@@ -254,6 +261,8 @@ app.all('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`OpenAI to NVIDIA NIM Proxy running on port ${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/health`);
+  console.log(`Root endpoint: http://localhost:${PORT}/`);
+  console.log(`V1 endpoint: http://localhost:${PORT}/v1`);
   console.log(`Reasoning display: ${SHOW_REASONING ? 'ENABLED' : 'DISABLED'}`);
   console.log(`Thinking mode: ${ENABLE_THINKING_MODE ? 'ENABLED' : 'DISABLED'}`);
 });
