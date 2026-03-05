@@ -16,7 +16,7 @@ const NIM_API_KEY = process.env.NIM_API_KEY;
 
 // 🔥 Conservamos tu mapping
 const MODEL_MAPPING = {
-  "gpt-3.5-turbo": "moonshotai/kimi-k2.5",
+  "gpt-3.5-turbo": "z-ai/glm4.7",
   "gpt-4": "deepseek-ai/deepseek-v3.2",
   "gpt-4-turbo": "deepseek-ai/deepseek-v3.1-terminus",
   "gpt-4o": "deepseek-ai/deepseek-v3.1",
